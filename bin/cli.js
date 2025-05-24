@@ -10,13 +10,21 @@ import { getConfig, updateConfig, resetConfig, getOpenAIKey, setOpenAIKey, getAn
 
 const program = new Command();
 
-// Helper function to create spinner
-function createSpinner(text) {
-  return ora({
-    text,
-    spinner: 'dots',
-    color: 'cyan'
-  });
+// Spinner utility (more reliable than ora for interactive sessions)
+let spinnerInterval;
+const spinnerFrames = ['⠋','⠙','⠹','⠸','⠼','⠴','⠦','⠧','⠇','⠏'];
+let spinnerIndex = 0;
+
+function startSpinner(text = 'Thinking...') {
+  process.stdout.write(`${text} `);
+  spinnerInterval = setInterval(() => {
+    process.stdout.write(`\r${text} ${spinnerFrames[spinnerIndex++ % spinnerFrames.length]} `);
+  }, 80);
+}
+
+function stopSpinner() {
+  clearInterval(spinnerInterval);
+  process.stdout.write('\r\x1b[K'); // clear line
 }
 
 // Interactive chat mode
@@ -26,15 +34,51 @@ async function startInteractiveMode(options = {}) {
 
   const agent = new AIAgent(options);
   
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-    prompt: chalk.cyan('ai > ')
-  });
+  // Check if input is being piped in
+  const isPiped = !process.stdin.isTTY;
+  
+  if (isPiped) {
+    // Handle piped input (e.g., from echo)
+    let pipeInput = '';
+    
+    process.stdin.on('data', (chunk) => {
+      pipeInput += chunk;
+    });
+    
+    process.stdin.on('end', async () => {
+      if (pipeInput.trim()) {
+        console.log(chalk.cyan(`ai > ${pipeInput.trim()}`));
+        
+        try {
+          startSpinner('Thinking...');
+          const response = await agent.query(pipeInput.trim());
+          stopSpinner();
+          console.log(chalk.green('\n🤖 ') + response + '\n');
+        } catch (error) {
+          stopSpinner();
+          console.error(chalk.red(`❌ Error: ${error.message}\n`));
+        }
+      } else {
+        console.log(chalk.yellow('No input provided.'));
+      }
+    });
+  } else {
+    // Interactive mode
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
 
-  rl.prompt();
+    // Start the conversation
+    chatWithAI(rl, agent);
+  }
+}
 
-  rl.on('line', async (input) => {
+/**
+ * Main conversation function - uses recursive callback pattern for stability
+ */
+function chatWithAI(rl, agent) {
+  rl.question(chalk.cyan('ai > '), async (input) => {
     const trimmedInput = input.trim();
     
     // Handle exit commands
@@ -52,7 +96,7 @@ async function startInteractiveMode(options = {}) {
       console.log(chalk.gray('  config      - Show current configuration'));
       console.log(chalk.gray('  exit, quit  - Exit the AI agent'));
       console.log(chalk.gray('  <question>  - Ask the AI agent anything\n'));
-      rl.prompt();
+      chatWithAI(rl, agent);
       return;
     }
 
@@ -60,7 +104,7 @@ async function startInteractiveMode(options = {}) {
     if (trimmedInput === 'clear') {
       agent.clearHistory();
       console.log(chalk.green('✅ Conversation history cleared\n'));
-      rl.prompt();
+      chatWithAI(rl, agent);
       return;
     }
 
@@ -70,42 +114,32 @@ async function startInteractiveMode(options = {}) {
       console.log(chalk.blue('\n⚙️ Current Configuration:'));
       console.log(JSON.stringify(config, null, 2));
       console.log();
-      rl.prompt();
+      chatWithAI(rl, agent);
       return;
     }
 
     // Skip empty input
     if (!trimmedInput) {
-      rl.prompt();
+      chatWithAI(rl, agent);
       return;
     }
 
     // Process AI query
     try {
-      const spinner = createSpinner('Thinking...');
-      spinner.start();
+      startSpinner('Thinking...');
 
       const response = await agent.query(trimmedInput);
       
-      spinner.stop();
+      stopSpinner();
       console.log(chalk.green('\n🤖 ') + response + '\n');
       
     } catch (error) {
+      stopSpinner();
       console.error(chalk.red(`❌ Error: ${error.message}\n`));
     }
-
-    rl.prompt();
-  });
-
-  rl.on('close', () => {
-    console.log(chalk.yellow('\nGoodbye! 👋'));
-    process.exit(0);
-  });
-
-  // Handle Ctrl+C gracefully
-  rl.on('SIGINT', () => {
-    console.log(chalk.yellow('\n\nGoodbye! 👋'));
-    process.exit(0);
+    
+    // Continue the conversation
+    chatWithAI(rl, agent);
   });
 }
 
@@ -137,12 +171,12 @@ program
       console.log(chalk.gray(`Question: ${question}\n`));
 
       const agent = new AIAgent(options);
-      const spinner = createSpinner('Thinking...');
-      spinner.start();
+      startSpinner('Thinking...');
 
       const response = await agent.query(question);
       
-      spinner.succeed(chalk.green('Response:'));
+      stopSpinner();
+      console.log(chalk.green('Response:'));
       console.log(response);
 
     } catch (error) {
@@ -539,9 +573,3 @@ program
 
 // Parse command line arguments
 program.parse(process.argv);
-
-// Show help if no command provided and no default command
-if (!process.argv.slice(2).length) {
-  // Start interactive mode by default
-  startInteractiveMode();
-}
