@@ -34,7 +34,8 @@ async function runAllTests() {
 
   const tests = [
     'basic.test.js',
-    'enhanced.test.js'
+    'enhanced.test.js',
+    'enhanced-features.test.js'
   ];
 
   let passed = 0;

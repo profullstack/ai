@@ -11,7 +11,7 @@ import { dirname, join } from 'path';
 import { AIAgent } from '../lib/agent.js';
 import { EnhancedAIAgent } from '../lib/enhanced-agent.js';
 import { getConfig, updateConfig, resetConfig, getOpenAIKey, setOpenAIKey, getAnthropicKey, setAnthropicKey, getConfigFilePath } from '../lib/config.js';
-import { resetPermissions, showPermissions, showApprovedCommands, addApprovedCommand, removeApprovedCommand, resetApprovedCommands } from '../lib/actions.js';
+import { resetPermissions, showPermissions, showApprovedCommands, addApprovedCommand, removeApprovedCommand, resetApprovedCommands, setGlobalReadlineInterface } from '../lib/actions.js';
 
 // Get version from package.json
 const __filename = fileURLToPath(import.meta.url);
@@ -86,6 +86,9 @@ async function startInteractiveMode(options = {}) {
       input: process.stdin,
       output: process.stdout,
     });
+
+    // Set the global readline interface for permission prompts
+    setGlobalReadlineInterface(rl);
 
     // Start the conversation
     chatWithAI(rl, agent);
