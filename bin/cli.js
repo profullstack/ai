@@ -5,10 +5,20 @@ import prompts from 'prompts';
 import chalk from 'chalk';
 import ora from 'ora';
 import readline from 'readline';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import { AIAgent } from '../lib/agent.js';
 import { EnhancedAIAgent } from '../lib/enhanced-agent.js';
 import { getConfig, updateConfig, resetConfig, getOpenAIKey, setOpenAIKey, getAnthropicKey, setAnthropicKey, getConfigFilePath } from '../lib/config.js';
 import { resetPermissions, showPermissions, showApprovedCommands, addApprovedCommand, removeApprovedCommand, resetApprovedCommands } from '../lib/actions.js';
+
+// Get version from package.json
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const packageJsonPath = join(__dirname, '..', 'package.json');
+const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
+const version = packageJson.version;
 
 const program = new Command();
 
@@ -636,7 +646,7 @@ program
 program
   .name('ai')
   .description('Interactive AI agent for conversations and questions')
-  .version('1.0.1', '-v, --version', 'display version number');
+  .version(version, '-v, --version', 'display version number');
 
 // Parse command line arguments
 program.parse(process.argv);
