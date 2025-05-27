@@ -6,7 +6,9 @@ import chalk from 'chalk';
 import ora from 'ora';
 import readline from 'readline';
 import { AIAgent } from '../lib/agent.js';
+import { EnhancedAIAgent } from '../lib/enhanced-agent.js';
 import { getConfig, updateConfig, resetConfig, getOpenAIKey, setOpenAIKey, getAnthropicKey, setAnthropicKey, getConfigFilePath } from '../lib/config.js';
+import { resetPermissions, showPermissions, showApprovedCommands, addApprovedCommand, removeApprovedCommand, resetApprovedCommands } from '../lib/actions.js';
 
 const program = new Command();
 
@@ -29,10 +31,16 @@ function stopSpinner() {
 
 // Interactive chat mode
 async function startInteractiveMode(options = {}) {
-  console.log(chalk.blue('🤖 AI Agent'));
+  const useEnhanced = options.enhanced !== false; // Default to enhanced mode
+  
+  console.log(chalk.blue('🤖 AI Agent' + (useEnhanced ? ' (Enhanced)' : '')));
+  if (useEnhanced) {
+    console.log(chalk.green('✨ Enhanced mode: Can read/write files and execute commands'));
+    console.log(chalk.yellow('⚠️  You will be prompted for permission before any file/command operations'));
+  }
   console.log(chalk.gray('Type your questions or commands. Type "exit" or "quit" to leave.\n'));
 
-  const agent = new AIAgent(options);
+  const agent = useEnhanced ? new EnhancedAIAgent(options) : new AIAgent(options);
   
   // Check if input is being piped in
   const isPiped = !process.stdin.isTTY;
@@ -95,7 +103,17 @@ function chatWithAI(rl, agent) {
       console.log(chalk.gray('  clear       - Clear the conversation history'));
       console.log(chalk.gray('  config      - Show current configuration'));
       console.log(chalk.gray('  exit, quit  - Exit the AI agent'));
-      console.log(chalk.gray('  <question>  - Ask the AI agent anything\n'));
+      console.log(chalk.gray('  <question>  - Ask the AI agent anything'));
+      
+      if (agent.getActionsEnabled && agent.getActionsEnabled()) {
+        console.log(chalk.green('\n✨ Enhanced Mode Features:'));
+        console.log(chalk.gray('  • File operations (read, write, delete)'));
+        console.log(chalk.gray('  • Command execution'));
+        console.log(chalk.gray('  • Directory listing'));
+        console.log(chalk.gray('  • Permission-based security'));
+        console.log(chalk.yellow('\n⚠️  You will be prompted before any file/command operations'));
+      }
+      console.log();
       chatWithAI(rl, agent);
       return;
     }
@@ -152,6 +170,8 @@ program
   .option('--max-tokens <tokens>', 'Maximum response length', '1000')
   .option('--system <prompt>', 'System prompt to use')
   .option('--verbose', 'Enable verbose output')
+  .option('--enhanced', 'Enable enhanced mode with file/command capabilities (default: true)')
+  .option('--no-enhanced', 'Disable enhanced mode (text-only)')
   .action(async (options) => {
     await startInteractiveMode(options);
   });
@@ -165,12 +185,20 @@ program
   .option('--max-tokens <tokens>', 'Maximum response length', '1000')
   .option('--system <prompt>', 'System prompt to use')
   .option('--verbose', 'Enable verbose output')
+  .option('--enhanced', 'Enable enhanced mode with file/command capabilities (default: true)')
+  .option('--no-enhanced', 'Disable enhanced mode (text-only)')
   .action(async (question, options) => {
     try {
-      console.log(chalk.blue('🤖 AI Agent'));
+      const useEnhanced = options.enhanced !== false;
+      
+      console.log(chalk.blue('🤖 AI Agent' + (useEnhanced ? ' (Enhanced)' : '')));
+      if (useEnhanced) {
+        console.log(chalk.green('✨ Enhanced mode: Can read/write files and execute commands'));
+        console.log(chalk.yellow('⚠️  You will be prompted for permission before any file/command operations'));
+      }
       console.log(chalk.gray(`Question: ${question}\n`));
 
-      const agent = new AIAgent(options);
+      const agent = useEnhanced ? new EnhancedAIAgent(options) : new AIAgent(options);
       startSpinner('Thinking...');
 
       const response = await agent.query(question);
@@ -195,6 +223,12 @@ program
   .option('--set-openai-key <key>', 'Set OpenAI API key')
   .option('--set-anthropic-key <key>', 'Set Anthropic API key')
   .option('--show-keys', 'Show API key status (without revealing keys)')
+  .option('--show-permissions', 'Show current action permissions')
+  .option('--reset-permissions', 'Reset all action permissions')
+  .option('--show-commands', 'Show approved commands list')
+  .option('--add-command <command>', 'Add command to approved list')
+  .option('--remove-command <command>', 'Remove command from approved list')
+  .option('--reset-commands', 'Reset approved commands to defaults')
   .action(async (options) => {
     try {
       if (options.show) {
@@ -238,6 +272,39 @@ program
         if (anthropicKey) {
           console.log(chalk.gray(`  Anthropic key source: ${process.env.ANTHROPIC_API_KEY ? 'Environment variable' : 'Config file'}`));
         }
+        return;
+      }
+
+      if (options.showPermissions) {
+        showPermissions();
+        return;
+      }
+
+      if (options.resetPermissions) {
+        resetPermissions();
+        return;
+      }
+
+      if (options.showCommands) {
+        showApprovedCommands();
+        return;
+      }
+
+      if (options.addCommand) {
+        addApprovedCommand(options.addCommand);
+        console.log(chalk.green(`✅ Added "${options.addCommand}" to approved commands`));
+        return;
+      }
+
+      if (options.removeCommand) {
+        removeApprovedCommand(options.removeCommand);
+        console.log(chalk.green(`✅ Removed "${options.removeCommand}" from approved commands`));
+        return;
+      }
+
+      if (options.resetCommands) {
+        resetApprovedCommands();
+        console.log(chalk.green('✅ Approved commands reset to defaults'));
         return;
       }
 

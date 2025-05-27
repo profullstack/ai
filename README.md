@@ -1,6 +1,6 @@
 # @profullstack/ai
 
-A simple AI agent CLI tool for interactive conversations with AI.
+A powerful AI agent CLI tool for interactive conversations with AI, featuring file operations and command execution capabilities.
 
 ## Installation
 
@@ -14,7 +14,44 @@ Or using pnpm:
 pnpm add -g @profullstack/ai
 ```
 
+## Features
+
+- 🤖 **Interactive AI Chat**: Conversational interface with AI models
+- 📁 **File Operations**: Read, write, and delete files with permission prompts
+- ⚡ **Command Execution**: Run system commands safely with user approval
+- 🔐 **Permission System**: Granular control with "allow", "disallow", "allow forever" options
+- 🔑 **Multi-Provider Support**: Works with OpenAI GPT and Anthropic Claude models
+- ⚙️ **Flexible Configuration**: Customizable settings and API key management
+- 📊 **Conversation History**: Track and export chat sessions
+
 ## Usage
+
+### Enhanced Mode (Default)
+
+The AI agent runs in enhanced mode by default, which enables file operations and command execution:
+
+```bash
+ai
+```
+
+This starts an interactive session where the AI can:
+- Read and analyze files in your project
+- Create, modify, and delete files (with your permission)
+- Execute commands like `npm install`, `git status`, etc.
+- List directory contents and check file existence
+
+**Security**: You'll be prompted before any file or command operation with options:
+- **Allow** (this time only)
+- **Disallow** (reject the action)
+- **Allow forever** (permanently allow this type of action)
+
+### Text-Only Mode
+
+To use the traditional text-only mode without file/command capabilities:
+
+```bash
+ai --no-enhanced
+```
 
 ### Interactive Mode (Default)
 
@@ -60,6 +97,51 @@ ai ask "What is the capital of France?"
 - `clear` - Clear conversation history
 - `config` - Show current configuration
 - `exit`, `quit`, or `q` - Exit the AI agent
+
+### Permission Management
+
+Control what actions the AI can perform:
+
+```bash
+# Show current permissions
+ai config --show-permissions
+
+# Reset all permissions (will prompt again for each action)
+ai config --reset-permissions
+```
+
+**Permission Types:**
+- `file_read` - Reading files
+- `file_write` - Writing/creating files
+- `file_delete` - Deleting files
+- `command_exec` - Executing system commands
+
+**Permission Levels:**
+- **Allow** (this time only) - Permit the action once
+- **Disallow** - Reject the action
+- **Allow forever** - Permanently allow this action type
+- **[x] Auto-approve** - Automatically allow approved actions (for commands in approved list)
+
+### Approved Commands Management
+
+Control which commands can be auto-approved:
+
+```bash
+# Show approved commands list
+ai config --show-commands
+
+# Add a command to approved list
+ai config --add-command "git status"
+
+# Remove a command from approved list
+ai config --remove-command "rm -rf"
+
+# Reset to default approved commands
+ai config --reset-commands
+```
+
+**Default Approved Commands:**
+Safe, read-only commands like `ls`, `pwd`, `git status`, `npm list`, etc. are pre-approved for auto-execution when auto-approve mode is enabled.
 
 ## Quick Setup
 
@@ -184,7 +266,22 @@ Same options as interactive mode.
 
 ## Examples
 
-### Basic Usage
+### Enhanced Agent Usage
+
+```javascript
+import { EnhancedAIAgent } from '@profullstack/ai';
+
+const agent = new EnhancedAIAgent({
+  model: 'gpt-3.5-turbo',
+  temperature: 0.7
+});
+
+// AI can now read files, write files, and execute commands
+const response = await agent.query('Read my package.json and create a simple README for this project');
+console.log(response);
+```
+
+### Basic Agent Usage (Text-only)
 
 ```javascript
 import { AIAgent } from '@profullstack/ai';
@@ -196,6 +293,17 @@ const agent = new AIAgent({
 
 const response = await agent.query('Hello, world!');
 console.log(response);
+```
+
+### File Operations
+
+```javascript
+import { readFile, writeFile, executeCommand } from '@profullstack/ai';
+
+// These functions include built-in permission prompts
+const content = await readFile('./myfile.txt');
+await writeFile('./output.txt', 'Hello, world!');
+const result = await executeCommand('npm test');
 ```
 
 ### Configuration Management
@@ -266,7 +374,37 @@ pnpm run cli
 
 ## API Reference
 
+### EnhancedAIAgent Class
+
+The enhanced agent extends AIAgent with file and command capabilities.
+
+#### Constructor
+
+```javascript
+new EnhancedAIAgent(options)
+```
+
+Options:
+- `model` - AI model to use
+- `temperature` - Response creativity
+- `maxTokens` - Maximum response length
+- `system` - System prompt
+- `verbose` - Enable verbose output
+- `enableActions` - Enable file/command operations (default: true)
+
+#### Methods
+
+- `query(message)` - Send a message and get a response (with action processing)
+- `clearHistory()` - Clear conversation history
+- `getHistory()` - Get conversation history
+- `getStats()` - Get conversation statistics
+- `exportHistory(format)` - Export history in specified format
+- `setActionsEnabled(enabled)` - Enable/disable action processing
+- `getActionsEnabled()` - Check if actions are enabled
+
 ### AIAgent Class
+
+Basic text-only agent without file/command capabilities.
 
 #### Constructor
 
@@ -299,6 +437,23 @@ Options:
 - `validateConfig(config)` - Validate configuration
 - `getAvailableModels()` - Get list of available models
 - `getConfigSchema()` - Get configuration schema
+### Action Functions
+
+File and command operations with built-in permission prompts:
+
+- `readFile(filePath)` - Read a file with permission check
+- `writeFile(filePath, content)` - Write to a file with permission check
+- `deleteFile(filePath)` - Delete a file with permission check
+- `executeCommand(command, options)` - Execute a command with permission check
+- `listFiles(dirPath)` - List files in a directory
+- `fileExists(filePath)` - Check if a file exists
+
+### Permission Functions
+
+- `resetPermissions()` - Reset all action permissions
+- `showPermissions()` - Display current permission settings
+- `ACTION_TYPES` - Constants for action types
+- `PERMISSION_LEVELS` - Constants for permission levels
 
 ### API Key Functions
 

@@ -24,6 +24,7 @@
   "scripts": {
     "test": "node tests/run-tests.js",
     "example": "node examples/basic-usage.js",
+    "example:enhanced": "node examples/enhanced-usage.js",
     "cli": "./bin/cli.js",
     "prepare": "husky",
     "pre-commit": "pnpm test"

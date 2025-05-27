@@ -33,7 +33,8 @@ async function runAllTests() {
   console.log('🧪 Running All Tests\n');
 
   const tests = [
-    'basic.test.js'
+    'basic.test.js',
+    'enhanced.test.js'
   ];
 
   let passed = 0;
