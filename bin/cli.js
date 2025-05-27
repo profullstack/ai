@@ -636,7 +636,7 @@ program
 program
   .name('ai')
   .description('Interactive AI agent for conversations and questions')
-  .version('1.0.0');
+  .version('1.0.1', '-v, --version', 'display version number');
 
 // Parse command line arguments
 program.parse(process.argv);
