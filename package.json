@@ -1,6 +1,6 @@
 {
   "name": "@profullstack/ai",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "A simple AI agent CLI tool for interactive conversations with AI",
   "type": "module",
   "main": "lib/index.js",
