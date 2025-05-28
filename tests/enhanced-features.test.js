@@ -58,7 +58,7 @@ test('EnhancedAIAgent should have enhanced system prompt', () => {
   const agent = new EnhancedAIAgent({ enableActions: true });
   assert(agent.systemPrompt.includes('ACTION:READ_FILE'));
   assert(agent.systemPrompt.includes('ACTION:EXEC_COMMAND'));
-  assert(agent.systemPrompt.includes('IMPORTANT: You MUST use'));
+  assert(agent.systemPrompt.includes('CRITICAL: You MUST use'));
 });
 
 test('EnhancedAIAgent should disable actions when requested', () => {
@@ -253,7 +253,7 @@ console.log('\n📝 System Prompt Tests');
 test('Should have enhanced system prompt with examples', () => {
   const agent = new EnhancedAIAgent({ enableActions: true });
   
-  assert(agent.systemPrompt.includes('Examples of correct responses'));
+  assert(agent.systemPrompt.includes('Examples of CORRECT responses'));
   assert(agent.systemPrompt.includes('What dependencies does this project have'));
   assert(agent.systemPrompt.includes('ACTION:READ_FILE:package.json'));
 });
