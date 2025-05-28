@@ -52,6 +52,9 @@ const test = new TestRunner();
 
 // Test AIAgent creation
 test.test('AIAgent can be created', () => {
+  // Reset config to ensure clean state
+  resetConfig();
+  
   const agent = new AIAgent();
   test.assert(agent instanceof AIAgent, 'Agent should be instance of AIAgent');
   test.assertEqual(agent.model, 'gpt-3.5-turbo', 'Default model should be gpt-3.5-turbo');
@@ -85,6 +88,9 @@ test.test('AIAgent maintains conversation history structure', () => {
 
 // Test conversation stats structure (without API calls)
 test.test('AIAgent provides conversation stats structure', () => {
+  // Reset config to ensure clean state
+  resetConfig();
+  
   const agent = new AIAgent();
   
   const stats = agent.getStats();

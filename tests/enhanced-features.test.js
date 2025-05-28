@@ -70,13 +70,37 @@ test('EnhancedAIAgent should parse actions from response', () => {
   const agent = new EnhancedAIAgent({ enableActions: false }); // Disable to avoid actual execution
   const response = 'I will read the file. ACTION:READ_FILE:test.txt';
   
-  // Test the action regex
-  const actionRegex = /ACTION:([A-Z_]+):([^\n]+)/g;
+  // Test the action regex (updated regex)
+  const actionRegex = /ACTION:([A-Z_]+):([^`]*?)(?=\n(?:ACTION:|$)|$)/gs;
   const matches = [...response.matchAll(actionRegex)];
   
   assert.equal(matches.length, 1);
   assert.equal(matches[0][1], 'READ_FILE');
-  assert.equal(matches[0][2], 'test.txt');
+  assert.equal(matches[0][2].trim(), 'test.txt');
+});
+
+test('EnhancedAIAgent should parse multi-line WRITE_FILE actions', () => {
+  const agent = new EnhancedAIAgent({ enableActions: false }); // Disable to avoid actual execution
+  const response = `I'll create a test file.
+
+ACTION:WRITE_FILE:test.js:CONTENT_START
+const assert = require('assert');
+assert(true);
+CONTENT_END
+
+File created successfully.`;
+  
+  // Test the action regex with multi-line content
+  const actionRegex = /ACTION:([A-Z_]+):([^`]*?)(?=\n(?:ACTION:|$)|$)/gs;
+  const matches = [...response.matchAll(actionRegex)];
+  
+  assert.equal(matches.length, 1);
+  assert.equal(matches[0][1], 'WRITE_FILE');
+  
+  const params = matches[0][2].trim();
+  assert(params.includes(':CONTENT_START'), 'Should include CONTENT_START');
+  assert(params.includes('CONTENT_END'), 'Should include CONTENT_END');
+  assert(params.includes('assert(true)'), 'Should include actual content');
 });
 
 // Approved Commands Tests

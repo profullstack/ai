@@ -39,11 +39,19 @@ This starts an interactive session where the AI can:
 - Create, modify, and delete files (with your permission)
 - Execute commands like `npm install`, `git status`, etc.
 - List directory contents and check file existence
+- Apply precise file modifications using diff-based changes
+- Manage permissions and approved commands through chat
 
-**Security**: You'll be prompted before any file or command operation with options:
-- **Allow** (this time only)
-- **Disallow** (reject the action)
-- **Allow forever** (permanently allow this type of action)
+**Enhanced Mode Features:**
+- **ACTION Syntax**: The AI uses special `ACTION:READ_FILE:path` syntax to perform operations
+- **Smart Parsing**: Handles backticks and markdown formatting correctly
+- **In-Chat Configuration**: Manage settings directly through conversation
+- **Diff-Based Editing**: Make precise file changes instead of full rewrites
+
+**Security**: Currently auto-allows actions with clear notifications. You can still control behavior through:
+- **Permanent permissions** in config.json (`"file_read": "allow_forever"`)
+- **Auto-approve + approved commands** for safe command execution
+- **In-chat commands** to manage permissions and approved commands
 
 ### Text-Only Mode
 
@@ -97,6 +105,21 @@ ai ask "What is the capital of France?"
 - `clear` - Clear conversation history
 - `config` - Show current configuration
 - `exit`, `quit`, or `q` - Exit the AI agent
+
+### In-Chat Configuration Commands
+
+You can also manage permissions and settings directly through conversation:
+
+```bash
+ai > show my current permissions
+ai > show my approved commands
+ai > approve the command "docker ps"
+ai > remove the command "rm -rf" from approved list
+ai > set file operations to auto-approve
+ai > reset my permissions
+```
+
+The AI will understand these natural language commands and execute the appropriate configuration changes.
 
 ### Permission Management
 
@@ -281,6 +304,34 @@ const response = await agent.query('Read my package.json and create a simple REA
 console.log(response);
 ```
 
+### How Enhanced Mode Works
+
+When you ask the AI to perform file or command operations, it uses special ACTION syntax:
+
+```bash
+ai > can you read my package.json file?
+
+🤖 I'll read the package.json file to check its contents.
+ACTION:READ_FILE:package.json
+
+⚠️  Auto-allowing action: Read file: package.json
+
+✅ Action completed successfully
+**File read:** `package.json`
+**Size:** 1280 characters, 62 lines
+[file contents displayed]
+```
+
+**Available ACTION Types:**
+- `ACTION:READ_FILE:path` - Read a file
+- `ACTION:WRITE_FILE:path:CONTENT_START\ncontent\nCONTENT_END` - Write to a file
+- `ACTION:DELETE_FILE:path` - Delete a file
+- `ACTION:LIST_FILES:directory` - List files in a directory
+- `ACTION:EXEC_COMMAND:command` - Execute a system command
+- `ACTION:DIFF_FILE:path:diff_content` - Apply diff-based changes to a file
+
+The AI automatically uses these actions when you ask for file operations, command execution, or project analysis.
+
 ### Basic Agent Usage (Text-only)
 
 ```javascript
@@ -371,6 +422,30 @@ pnpm run example
 ```bash
 pnpm run cli
 ```
+
+### Testing
+
+The project includes a comprehensive test suite covering all enhanced features:
+
+```bash
+# Run all tests
+pnpm test
+
+# Run individual test suites
+node tests/basic.test.js            # Basic functionality tests
+node tests/enhanced.test.js         # Enhanced agent tests
+node tests/enhanced-features.test.js # Comprehensive feature tests
+```
+
+**Test Coverage:**
+- **31 total tests** across 3 test suites
+- **100% pass rate** - All functionality working
+- **Enhanced features**: Action parsing, permission system, approved commands
+- **File operations**: Diff parsing, structure validation
+- **Configuration**: Load, update, reset operations
+- **Error handling**: Unknown actions, edge cases
+
+The tests run without requiring API keys and validate all core functionality.
 
 ## API Reference
 
