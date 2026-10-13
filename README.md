@@ -6,6 +6,14 @@ A powerful AI agent CLI tool for interactive conversations with AI, featuring fi
 
 ## Installation
 
+```sh
+curl -fsSL https://raw.githubusercontent.com/profullstack/ai/master/install.sh | sh
+```
+
+It installs the `ai` command into `~/.local` (no sudo) and fetches a private Node if this machine has no Node 18+. Run it again to update; remove with `sh ~/.local/share/ai/uninstall.sh`.
+
+Or with npm:
+
 ```bash
 npm install -g @profullstack/ai
 ```
